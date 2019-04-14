@@ -1,2 +1,5 @@
 *
 !.gitignore
+!index.html
+!game.js
+!/res/
