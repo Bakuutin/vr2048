@@ -10,9 +10,13 @@ AFRAME.registerComponent('tileboard', {
       this.actuator,
     );
     this.moved = false;
+    this.axis = [0, 0];
+    this.previousAxis = [];
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onClick = this.onClick.bind(this);
-    this.onTrackpadDown = this.onTrackpadDown.bind(this);
+    this.onTouchStart = this.onTouchStart.bind(this);
+    this.onTouchEnd = this.onTouchEnd.bind(this);
+    this.onAxisChanged = this.onAxisChanged.bind(this);
     this.goControls = document.getElementById('goControls');
   },
   tick: function () {
@@ -36,12 +40,18 @@ AFRAME.registerComponent('tileboard', {
   attachEventListeners: function () {
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('click', this.onClick);
-    this.goControls.addEventListener('axismove', this.onTrackpadDown);
+    this.goControls.addEventListener('trackpaddown', this.onTrackpadDown);
+    this.goControls.addEventListener('axismove', this.onAxisChanged);
+    this.goControls.addEventListener('trackpadtouchstart', this.onTouchStart);
+    this.goControls.addEventListener('trackpadtouchend', this.onTouchEnd);
   },
   removeEventListeners: function () {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('click', this.onClick);
-    this.goControls.removeEventListener('axismove', this.onTrackpadDown);
+    this.goControls.removeEventListener('trackpaddown', this.onTrackpadDown);
+    this.goControls.removeEventListener('axismove', this.onAxisChanged);
+    this.goControls.removeEventListener('trackpadtouchstart', this.onTouchStart);
+    this.goControls.removeEventListener('trackpadtouchend', this.onTouchEnd);
   },
 
   move: function (direction) {
@@ -67,9 +77,60 @@ AFRAME.registerComponent('tileboard', {
     }
   },
 
-  onTrackpadDown: function (event) {
-    var s = JSON.strinfify(event.gamepad.axis);
-    this.actuator.scoreContainer.setAttribute('text', 'value', s);
+  onTouchStart: function (e) {
+    this.previousAxis = [];
+  },
+
+  onTouchEnd: function (e) {
+    var x = this.axis[0] - this.previousAxis[0],
+        y = this.axis[1] - this.previousAxis[1],
+        h, w;
+
+    var minStep = 0.3;
+
+    if (x < -minStep) {
+      w = 'left';
+    } else if (x > minStep) {
+      w = 'right';
+    } else {
+      w = 'middle';
+    }
+
+    if (y < -minStep) {
+      h = 'top';
+    } else if (y > minStep) {
+      h = 'bottom';
+    } else {
+      h = 'middle';
+    }
+
+    var mapped = this.positionToMove[h][w];
+    if (mapped !== undefined) {
+      this.move(mapped);
+    } else {
+      this.setText("Didn't get ur move =_=");
+    }
+  },
+
+  setText(text) {
+    this.actuator.scoreContainer.setAttribute('text', 'value', text);
+  },
+
+  onAxisChanged: function (e) {
+    this.axis = e.detail.axis;
+
+    if(this.previousAxis.length === 0){
+      this.previousAxis = [
+        this.axis[0],
+        this.axis[1]
+      ];
+    }
+  },
+
+  positionToMove: {
+    top: {middle: 0},
+    middle: {right: 1, left: 3},
+    bottom: {middle: 2},
   },
 
   onClick: function (event) {
@@ -99,13 +160,7 @@ AFRAME.registerComponent('tileboard', {
       h = 'middle';
     }
 
-    var map = {
-      top: {middle: 0},
-      middle: {right: 1, left: 3},
-      bottom: {middle: 2},
-    };
-
-    var mapped = map[h][w];
+    var mapped = this.positionToMove[h][w];
     if (mapped !== undefined) {
       this.move(mapped);
     }
