@@ -8,34 +8,23 @@
 </head>
 
 <body>
-  <a-scene shadow="type: pcfsoft">
+  <a-scene>
     <a-assets>
       <a-asset-item id="tableModel" src="res/table/model.gltf"></a-asset-item>
-      <a-mixin id="tile"
-       geometry="primitive: box; height: 0.02; width: 0.1; depth: 0.1"
-       position="0 0.01 0"
-       material="shader: standard; color: gold" shadow></a-mixin>
-       <a-mixin id="tileText"
-       position="0 0.01 0"
-       rotation="-90 0 0"
-       text="color:black; width: 1; align: center"></a-mixin>
+      <a-mixin id="tile" geometry="primitive: box; height: 0.02; width: 0.09; depth: 0.09" position="0 0.01 0" material="shader: standard"></a-mixin>
     </a-assets>
 
-    <!-- <a-box position="0 3 5" scale="10 3 .2"></a-box> -->
-    <a-entity gltf-model="#tableModel" id="table" position="0.18 -0.09 2" shadow>
-      <a-entity id="board" position="0.146 1.033 -1" rotation="0 180 0" scale="2 2 2" tileboard>
-    </a-entity>
-    </a-entity>
-    <a-entity id="score-container"></a-entity>
-    <a-entity id="game-message"></a-entity>
-    <a-entity id="rig" position="0 0 0" rotation="0 180 0">
-        <a-entity camera
-                  position="0 1.7 0"
-                  look-controls="pointerLockEnabled: true"
-                  >
-        </a-entity>
+    <a-text id="game-message" value="" scale="8 8 8" align="center" position="0 5 6" rotation="10 180 0"></a-text>
+    <a-text id="score-container" value="" scale="1 1 1" align="center" position="0 1.3 1.5" rotation="-20 180 0"></a-text>
+    <a-entity gltf-model="#tableModel" id="table" position="0.18 -0.09 2">
+      <a-entity id="board" position="0.146 1.033 -1" rotation="0 180 0" scale="2 2 2" tileboard></a-entity>
     </a-entity>
 
+    <a-entity id="rig" position="0 0 0" rotation="0 180 0">
+      <a-entity camera position="0 1.7 0" look-controls="pointerLockEnabled: true">
+      </a-entity>
+      <a-entity oculus-go-controls id="goControls"></a-entity>
+    </a-entity>
 
 
     <a-entity id="credits" position="0 5 -10">
@@ -45,11 +34,9 @@
     </a-entity>
 
     <a-entity id="world">
-      <a-entity light="type: ambient; intensity: 0.5;"></a-entity>
-      <a-entity light="type:  hemisphere;  color:  #91dacf;  intensity:  0.6;  groundColor:  #937a24"></a-entity>
-      <a-entity light="type: directional; castShadow: true; intensity: 0.92; shadowCameraFar: 10; shadowMapHeight: 1024; shadowMapWidth: 1024;"
-                position="-1.2 2.16 -0.82"></a-entity>
-      <a-entity environment="preset: forest; dressingAmount: 900; shadow: true; lighting: none; fog: 0.85"></a-entity>
+      <a-entity light="type: hemisphere;  color: #91dacf;  intensity: 0.8;  groundColor: #937a24"></a-entity>
+      <a-entity light="type: directional; intensity: 0.92;" position="-1.2 2.16 -0.82"></a-entity>
+      <a-entity environment="preset: forest; shadow: false; lighting: none; fog: 0.85"></a-entity>
     </a-entity>
   </a-scene>
 </body>

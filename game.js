@@ -9,8 +9,11 @@ AFRAME.registerComponent('tileboard', {
       this.data.size,
       this.actuator,
     );
-    this.moved = true;
+    this.moved = false;
     this.onKeyDown = this.onKeyDown.bind(this);
+    this.onClick = this.onClick.bind(this);
+    this.onTrackpadDown = this.onTrackpadDown.bind(this);
+    this.goControls = document.getElementById('goControls');
   },
   tick: function () {
     if (this.moved) {
@@ -32,10 +35,13 @@ AFRAME.registerComponent('tileboard', {
   },
   attachEventListeners: function () {
     window.addEventListener('keydown', this.onKeyDown);
-
+    window.addEventListener('click', this.onClick);
+    this.goControls.addEventListener('axismove', this.onTrackpadDown);
   },
   removeEventListeners: function () {
     window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('click', this.onClick);
+    this.goControls.removeEventListener('axismove', this.onTrackpadDown);
   },
 
   move: function (direction) {
@@ -60,7 +66,87 @@ AFRAME.registerComponent('tileboard', {
       }
     }
   },
+
+  onTrackpadDown: function (event) {
+    var s = JSON.strinfify(event.gamepad.axis);
+    this.actuator.scoreContainer.setAttribute('text', 'value', s);
+  },
+
+  onClick: function (event) {
+    if (!isMobile.any()) {
+      return;
+    }
+
+    var x = event.clientX,
+        y = event.clientY,
+        Xmax = document.documentElement.clientWidth,
+        Ymax = document.documentElement.clientHeight,
+        h, w;
+
+    if (x < Xmax / 3) {
+      w = 'left';
+    } else if (x > Xmax - Xmax / 3) {
+      w = 'right';
+    } else {
+      w = 'middle';
+    }
+
+    if (y < Ymax / 3) {
+      h = 'top';
+    } else if (y > Ymax - Ymax / 3) {
+      h = 'bottom';
+    } else {
+      h = 'middle';
+    }
+
+    var map = {
+      top: {middle: 0},
+      middle: {right: 1, left: 3},
+      bottom: {middle: 2},
+    };
+
+    var mapped = map[h][w];
+    if (mapped !== undefined) {
+      this.move(mapped);
+    }
+  }
 });
+
+var isMobile = {
+  Android: function() {
+      return navigator.userAgent.match(/Android/i);
+  },
+  BlackBerry: function() {
+      return navigator.userAgent.match(/BlackBerry/i);
+  },
+  iOS: function() {
+      return navigator.userAgent.match(/iPhone|iPad|iPod/i);
+  },
+  Opera: function() {
+      return navigator.userAgent.match(/Opera Mini/i);
+  },
+  Windows: function() {
+      return navigator.userAgent.match(/IEMobile/i);
+  },
+  any: function() {
+      return (isMobile.Android() || isMobile.BlackBerry() || isMobile.iOS() || isMobile.Opera() || isMobile.Windows());
+  }
+};
+
+
+var COLORS = {
+  8: '#F2B179',
+  16: '#F59563',
+  32: '#FA7A61',
+  64: '#E95936',
+  128: '#F3D86D',
+  256: '#F2D04B',
+  512: '#E3C225',
+  1024: '#ECC440',
+  2048: '#ECC400',
+}
+
+var DEFAULT_COLOR = '#D6CAB5';
 
 
 class GameManager {
@@ -368,7 +454,7 @@ class VRActuator {
       self.message(true); // You win!
   }
   restart() {
-    this.clearMessage();
+    this.clearScore();
   }
   clearContainer(container) {
     while (container.firstChild) {
@@ -381,36 +467,31 @@ class VRActuator {
   }
   addTile(tile) {
     var element = document.createElement('a-entity');
-    var position = {x: tile.x, y: tile.y};
     element.setAttribute('mixin', 'tile');
-    element.setAttribute('color', 'gold');
-    this.setPosition(element, position);
-    var text = document.createElement('a-text');
-    text.setAttribute('value', tile.value);
-    text.setAttribute('mixin', 'tileText');
+    element.setAttribute('material', 'color', COLORS[tile.value] || DEFAULT_COLOR);
+    this.setPosition(element, tile);
+    var text = document.createElement('a-entity');
+    text.setAttribute('material', 'src', '')
+    text.setAttribute('text', {
+      'value': tile.value,
+      'align': 'center',
+      'color': '#766d64',
+    });
+    text.setAttribute('rotation', {'x': -90, 'y': 0, 'z': 0});
+    text.setAttribute('position', {'x': 0, 'y': 0.01, 'z': 0});
     element.appendChild(text);
+
     this.tileContainer.appendChild(element);
   }
   updateScore(score) {
-    this.clearContainer(this.scoreContainer);
-    var difference = score - this.score;
     this.score = score;
-    // this.scoreContainer.textContent = this.score;
-    // if (difference > 0) {
-    //   var addition = document.createElement("div");
-    //   addition.classList.add("score-addition");
-    //   addition.textContent = "+" + difference;
-    //   this.scoreContainer.appendChild(addition);
-    // }
+    this.scoreContainer.setAttribute('value', this.score);
   }
   message(won) {
-    // var type = won ? "game-won" : "game-over";
-    // var message = won ? "You win!" : "Game over!";
-    // this.messageContainer.classList.add(type);
-    // this.messageContainer.getElementsByTagName("p")[0].textContent = message;
+    this.scoreContainer.setAttribute('value', won ? "You win!" : "Game over!");
   }
-  clearMessage() {
-    // this.messageContainer.classList.remove("game-won", "game-over");
+  clearScore() {
+    this.scoreContainer.setAttribute('value', '');
   }
 }
 
